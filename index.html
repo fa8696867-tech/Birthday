@@ -17,3 +17,162 @@ const questions=[
 ];
 
 let step=-1,locked=false;
+
+  
+const app = document.getElementById('app');
+const audio = document.getElementById('music');
+const soundButton = document.getElementById('sound');
+let musicEnabled = true;
+let finalCelebrated = false;
+
+function photo(name) {
+  return `<img class="photo" src="photos/${name}.jpg" alt="Наше воспоминание" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{className:'placeholder',textContent:'📸 Фото воспоминания'}))">`;
+}
+
+function render() {
+  const total = questions.length;
+  document.getElementById('counter').textContent = step < 0 ? '🎉 Birthday Quest' : step >= total ? '🏆 Финал' : `💖 Вопрос ${step + 1} из ${total}`;
+  document.getElementById('bar').style.width = `${step >= total ? 100 : Math.max(0,step / total * 100)}%`;
+
+  if (step < 0) {
+    app.innerHTML = `${photo('cover')}
+      <h1>Ну вот тебе и 28! 🥂</h1>
+      <p>Прекрасный возраст, чтобы вспомнить всё… ну или почти всё 😏</p>
+      <p class="muted">Чтобы получить поздравление и подарок, тебе придётся пройти квест по нашим легендарным приключениям!</p>
+      <button class="primary" onclick="start()">Готова начать праздничный квест? 💖</button>`;
+    return;
+  }
+
+  if (step === total) {
+    app.innerHTML = `
+      <h1>С днём рождения, легенда! 🎂💗</h1>
+      <p>28 — это только начало новых приключений, историй, которые невозможно рассказывать при родителях, и воспоминаний, от которых мы будем смеяться ещё много лет!</p>
+      <p>Спасибо, что ты есть в моей жизни. Желаю тебе счастья, любви, исполнения самых сумасшедших желаний и чтобы у нас впереди было ещё миллион таких историй! 🥹💕</p>
+      <h2>🎁 Твой подарок уже ждёт!</h2>
+      <p>Чтобы получить его, напиши в нашу группу кодовое слово:</p>
+      <div class="code" id="code">Полтавський педагогічний національний університет імені Володимира Галактіоновича Короленка</div>
+      <button class="primary" onclick="copyCode(this)">📋 Скопировать код</button>`;
+    if (!finalCelebrated) {
+      finalCelebrated = true;
+      celebrate(120);
+    }
+    return;
+  }
+
+  locked = false;
+  const x = questions[step];
+  const imageName = step === total - 1 ? 'cover' : String(step + 1);
+
+  app.innerHTML = `${photo(imageName)}
+    <h2>${x.q}</h2>
+    ${x.typed
+      ? `<input class="answer" id="typed" placeholder="Твой ответ…" autocomplete="off">
+         <button class="primary" onclick="checkTyped()">Проверить ответ ✨</button>`
+      : `<div class="options">${x.a.map((v,i)=>`<button class="option" onclick="check(${i},this)">${String.fromCharCode(65+i)}. ${v}</button>`).join('')}</div>`
+    }
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <div id="next"></div>`;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function start() {
+  step = 0;
+  attemptAutoplay();
+  render();
+}
+
+function success() {
+  locked = true;
+  celebrate(32);
+  document.getElementById('feedback').textContent = '🎉 Верно! Память у тебя ещё работает!';
+  document.getElementById('next').innerHTML = '<button class="primary" onclick="step++;render()">Дальше →</button>';
+}
+
+function check(i,btn) {
+  if (locked) return;
+  if (i === questions[step].right) {
+    btn.classList.add('correct');
+    document.querySelectorAll('.option').forEach(b=>b.disabled=true);
+    success();
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('feedback').textContent = '😂 Ну ты даёшь! Попробуй ещё раз!';
+    setTimeout(()=>btn.classList.remove('wrong'),750);
+  }
+}
+
+function checkTyped() {
+  if (locked) return;
+  const value = document.getElementById('typed').value.trim().toLowerCase().replace(/\s+/g,' ');
+  if (value === questions[step].typed) success();
+  else document.getElementById('feedback').textContent = '🤭 Не-а! Вспоминай нашу последнюю точку сбора!';
+}
+
+function celebrate(count=40) {
+  const icons = ['🎉','🎊','💖','✨','🎆','💸','💵','🥳'];
+  for (let i=0;i<count;i++) {
+    const e=document.createElement('span');
+    e.className='spark';
+    e.textContent=icons[Math.floor(Math.random()*icons.length)];
+    e.style.left=(20+Math.random()*60)+'vw';
+    e.style.top=(20+Math.random()*55)+'vh';
+    e.style.fontSize=(18+Math.random()*23)+'px';
+    e.style.setProperty('--dx',(Math.random()*900-450)+'px');
+    e.style.setProperty('--dy',(Math.random()*700-350)+'px');
+    document.body.appendChild(e);
+    setTimeout(()=>e.remove(),1600);
+  }
+}
+
+function rain() {
+  const icons=['💸','💵','💖','🎈','✨','🥳'];
+  const e=document.createElement('span');
+  e.className='falling';
+  e.textContent=icons[Math.floor(Math.random()*icons.length)];
+  e.style.left=Math.random()*100+'vw';
+  e.style.fontSize=(18+Math.random()*18)+'px';
+  e.style.animationDuration=(5+Math.random()*5)+'s';
+  document.body.appendChild(e);
+  setTimeout(()=>e.remove(),10500);
+}
+
+setInterval(rain,700);
+
+function attemptAutoplay() {
+  if (!musicEnabled || !audio.paused) return;
+  audio.play()
+    .then(()=>soundButton.textContent='🔊 Музыка')
+    .catch(()=>{soundButton.textContent='🔇 Включить музыку';});
+}
+
+function toggleMusic() {
+  if (!audio.paused) {
+    musicEnabled=false;
+    audio.pause();
+    soundButton.textContent='🔇 Музыка';
+  } else {
+    musicEnabled=true;
+    attemptAutoplay();
+  }
+}
+
+async function copyCode(button) {
+  const code=document.getElementById('code').textContent;
+  try {
+    await navigator.clipboard.writeText(code);
+    button.textContent='💌 Код скопирован!';
+  } catch {
+    button.textContent='Выдели и скопируй код выше 💌';
+  }
+}
+
+window.addEventListener('load',attemptAutoplay);
+document.addEventListener('pointerdown',()=>{
+  if(musicEnabled) attemptAutoplay();
+},{once:true});
+
+render();
+</script>
+</body>
+</html>
+

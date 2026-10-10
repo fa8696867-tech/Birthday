@@ -72,7 +72,7 @@ function render(){
    app.appendChild(video);
    addText('h2','🎁 Твой подарок уже ждёт!');
    addText('p','Чтобы получить его, напиши в нашу группу кодовое слово:');
-   const code='Полтавський педагогічний національний університет імені Володимира Галактіоновича Короленка';
+   const code='Полтавський Педагогічний Національний Університет імені Володимира Галактіоновича Короленка';
    addText('div',code,'code');
    addButton('📋 Скопировать код',async()=>{try{await navigator.clipboard.writeText(code);alert('💌 Код скопирован!');}catch{alert('Выдели и скопируй код вручную 💌');}});
    if(!finalCelebrated){finalCelebrated=true;celebrate(120);}return;
